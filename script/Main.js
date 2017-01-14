@@ -1,7 +1,7 @@
 var app = new PLAYGROUND.Application({
   height: 600,
   width: 800,
-  smoothing: false,
+  smoothing: true,
 
   create: function() {
 
