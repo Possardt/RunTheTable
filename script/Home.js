@@ -1,7 +1,6 @@
 ENGINE.Home = {
 
 	create: function() {
-		//create stuff
 
 		//Creation functions:
 		var createStaticRectangle = function(sizeX, sizeY, x, y, rotation){
@@ -17,7 +16,7 @@ ENGINE.Home = {
 			return boundaryBd;			
 		};
 
-		var createDynamicRectangle = function(sizeX, sizeY, x, y, restitution, density, friction, rotation, rectText) {
+		this.createDynamicRectangle = function(sizeX, sizeY, x, y, restitution, density, friction, rotation, rectText, rectColor) {
 			var boundarySd = new b2BoxDef();
 			boundarySd.extents.Set(sizeX, sizeY);
 			boundarySd.restitution = restitution;
@@ -32,7 +31,8 @@ ENGINE.Home = {
 			data = {
 				text : rectText,
 				width : sizeX,
-				height : sizeY
+				height : sizeY,
+				color : rectColor
 			};
 			boundaryBd.userData = data;
 
@@ -49,25 +49,33 @@ ENGINE.Home = {
 			return new b2World(worldAABB, gravity, doSleep);
 		};
 
+		this.drawWorld = function(world, context){
+			for(var b = world.m_bodyList; b; b = b.m_next){
+				for(var s = b.GetShapeList(); s != null; s = s.GetNext()){
+					drawShape(s, context);
+					if(s.m_type === b2Shape.e_polyShape && s.m_restitution !== 0){
+						printShapeText(s, context);
+
+					}
+				}
+			}
+		};
+
 		//printing functions
 		var printShapeText = function(shape, context){
 			var text = shape.m_body.m_userData.text;
-			var x = shape.m_position.x - ((shape.m_body.m_userData.width / text.length) * -1);
-			//if its upside down you need to get a different y coordinate
-			//var y;
-			//if()
-			var y = shape.m_position.y - ((shape.m_body.m_userData.height / text.length) * -1);
+			var x = shape.m_position.x;
+			var y = shape.m_position.y;
+			var color = shape.m_body.m_userData.color;
 			context.save();
 			context
-				.fillStyle('rgba(255,255,255,1)')
+				.fillStyle(color)
 				.font('Courier New 10px')
 				.textAlign('center')
 				.translate(x, y)
 				.rotate(shape.m_body.m_rotation)
-				.fillText(text, 0, 0);
+				.fillText(text, 0, 22);
 			context.restore();
-
-			//context.translate(this.app.center.x, this.app.y);
 		};
 
 		//drawing functions
@@ -75,19 +83,11 @@ ENGINE.Home = {
 		var drawShape = function(shape, context){
 			
 			context.beginPath();
+			context.fillStyle('rgb(122,82,48)');
 			//context.fillStyle('rgba(255, 0, 0, 1)');
 			switch(shape.m_type) {
 				case b2Shape.e_polyShape:{
-					//context.fillStyle = "red";
-					//console.log('in here');
-					if(shape.m_restitution === 0){
-						context.fillStyle("rgb(122,82,48)");
-					}else{
-						context.fillStyle('rgba(255,0,0,.1');
-						//rectText
-						//printShapeText(shape, context);
-						//context.fillStyle("rgb(")
-					}
+					context.fillStyle("rgb(122,82,48)");
 					var poly = shape;
 					var tV = b2Math.AddVV(poly.m_position, b2Math.b2MulMV(poly.m_R, poly.m_vertices[0]));
 					context.moveTo(tV.x, tV.y);
@@ -104,6 +104,10 @@ ENGINE.Home = {
 
 		//The things that I need to create
 		this.world = createWorld();
+		this.stepNumber = 0;
+		this.rectangleText = ["RUN", "THE", "TABLE"];
+		this.rectangleSizes = [42, 42, 72];
+		this.textColors = ['rgb(32,55,49)', 'rgb(255,182,18)'];
 		
 		//create the static rectangles
 		//  createStaticRectangle(sizeX, sizeY, x, y, rotation);
@@ -112,25 +116,7 @@ ENGINE.Home = {
 		this.world.CreateBody(createStaticRectangle(6, 50, -225, 250, 0));
 		this.world.CreateBody(createStaticRectangle(6, 50, 225, 250, 0));
 
-		//create the dynamic rectangles
-		//  createDynamicRectanlge(sizeX, sizeY, x, y, restitution, density, friction, rotation, rectText)
-		this.world.CreateBody(createDynamicRectangle(120, 50, 0, -300, .5, .75, 0.5, 0, "TABLE"));
-		this.world.CreateBody(createDynamicRectangle(100, 50, 0, -380, .5, .75, 0.5, 0, "THE"));
-		this.world.CreateBody(createDynamicRectangle(80, 50, 0, -460, .5, .75, 0.5, 0, "RUN"));
 		
-
-		//at the end have draw world?
-		this.drawWorld = function(world, context){
-			for(var b = world.m_bodyList; b; b = b.m_next){
-				for(var s = b.GetShapeList(); s != null; s = s.GetNext()){
-					drawShape(s, context);
-					if(s.m_type === b2Shape.e_polyShape && s.m_restitution !== 0){
-						printShapeText(s, context);
-
-					}
-				}
-			}
-		};
 	},
 	step: function(dt){
 		/*update game logic*/
@@ -139,27 +125,38 @@ ENGINE.Home = {
 		var timeStep = 1.0 / 60;
 		var iteration = 1;
 		this.world.Step(timeStep, iteration);
-
+		this.stepNumber++;
 
 	},
 	render: function(){
 		
 		var app = this.app;
 		var layer = this.app.layer;
-		layer.clear('#222');
+
+		layer.clear('#a9a9a9');
 		layer.save();
 		layer.translate(app.center.x, app.center.y);
 		layer.align(0.5, 0.5);
 		layer.scale(1,1);
 		layer
-			.fillStyle('#fff')
 			.textAlign('center')
-			.font('50px Courier New')
-			.fillText('Run The', 0, 0)
-			.fillText('Table', 0, 48);
+			.font('50px Courier New');
 		layer.translate(app.center.x, app.y);
+
 		this.drawWorld(this.world, this.app.layer);
+
+		if(this.stepNumber %20 === 0){
+			var index = this.stepNumber % 3;
+			var randIndex = Math.random() > .5 ? 1 : 0;
+			var x = Math.random() > .5  ? Math.random() * this.app.layer.width : Math.random() * this.app.layer.width * -1;
+			var y = (Math.random() * this.app.layer.height * -1) - 200;
+			var rectangle = this.createDynamicRectangle(this.rectangleSizes[index], 17, x, y, .5, .75, .5, 0, this.rectangleText[index], this.textColors[randIndex]);
+			this.world.CreateBody(rectangle);
+		}
 		layer.restore();
 
+	},
+	pointerdown: function(event) {
+		console.log(event.button.x);
 	}
 };
