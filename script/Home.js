@@ -87,7 +87,9 @@ ENGINE.Home = {
 			//context.fillStyle('rgba(255, 0, 0, 1)');
 			switch(shape.m_type) {
 				case b2Shape.e_polyShape:{
-					context.fillStyle("rgb(122,82,48)");
+					if(shape.m_body.m_userData !== null){
+						context.fillStyle('rgba(255,255,255,0)');
+					}
 					var poly = shape;
 					var tV = b2Math.AddVV(poly.m_position, b2Math.b2MulMV(poly.m_R, poly.m_vertices[0]));
 					context.moveTo(tV.x, tV.y);
@@ -108,7 +110,7 @@ ENGINE.Home = {
 		this.rectangleText = ["RUN", "THE", "TABLE"];
 		this.rectangleSizes = [42, 42, 72];
 		this.textColors = ['rgb(32,55,49)', 'rgb(255,182,18)'];
-		
+
 		//create the static rectangles
 		//  createStaticRectangle(sizeX, sizeY, x, y, rotation);
 		this.world.CreateBody(createStaticRectangle(300, 4, 0, 200, 0));
@@ -157,6 +159,8 @@ ENGINE.Home = {
 
 	},
 	pointerdown: function(event) {
-		console.log(event.button.x);
+		console.log(event.x);
+		//if within 'play' button bounds: 
+		//this.app.setState(ENGINE.Game);
 	}
 };
